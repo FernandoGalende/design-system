@@ -60,7 +60,7 @@ const mapItemIds = (items: Item[], depth = 0): ItemWithId[] =>
   }));
 
 interface MapItemUIStateArgs {
-  items: ItemWithId[];
+  items: ItemWithStateAndId[];
   currentPath: string;
   depth?: number;
   didChangeCurrentPath?: boolean;
@@ -120,7 +120,7 @@ export interface TableOfContentsProps {
 export function TableOfContents({ children, currentPath, items, ...rest }: TableOfContentsProps) {
   const [itemsWithIds] = useState<ItemWithId[]>(mapItemIds(items));
   const [itemsWithUIState, setItemsWithUIState] = useState(
-    mapItemUIState({ currentPath, items: itemsWithIds })
+    mapItemUIState({ currentPath, items: itemsWithIds as ItemWithStateAndId[] })
   );
   const uiStateCommonArgs = { currentPath, items: itemsWithUIState };
   const toggleAllOpenStates = (isOpen: boolean) =>
