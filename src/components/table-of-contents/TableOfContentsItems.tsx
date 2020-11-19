@@ -1,29 +1,39 @@
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
+import React from 'react';
+import styled, { css } from 'styled-components';
+// @ts-ignore
 import { BulletLink } from './BulletLink';
+// @ts-ignore
 import { ItemLink } from './ItemLink';
+// @ts-ignore
 import { MenuLink } from './MenuLink';
 import { color, typography } from '../shared/styles';
 import { Icon } from '../Icon';
 import { Link } from '../Link';
 
-const MENU = 'menu';
-const LINK = 'link';
-const BULLET_LINK = 'bullet-link';
-export const ITEM_TYPES = Object.freeze({
-  MENU,
-  LINK,
-  BULLET_LINK,
-});
+export type ItemType = 'menu' | 'link' | 'bullet-link';
 
-const getItemComponent = (itemType) => {
+export interface Item {
+  title: string;
+  type: ItemType;
+  path?: string;
+  children?: Item[];
+}
+
+export interface ItemWithId extends Item {
+  id: string;
+}
+
+export interface ItemWithStateAndId extends ItemWithId {
+  isOpen?: boolean;
+}
+
+const getItemComponent = (itemType: ItemType) => {
   switch (itemType) {
-    case ITEM_TYPES.MENU:
+    case 'menu':
       return Menu;
-    case ITEM_TYPES.LINK:
+    case 'link':
       return ItemLink;
-    case ITEM_TYPES.BULLET_LINK:
+    case 'bullet-link':
       return BulletLink;
     default:
       return null;
@@ -49,7 +59,12 @@ const TopLevelMenuToggle = styled(Link).attrs({ isButton: true, tertiary: true }
   }
 `;
 
-const ArrowIcon = styled(Icon).attrs({ icon: 'arrowright' })`
+interface ArrowIconProps {
+  isOpen?: boolean;
+  isTopLevel?: boolean;
+}
+
+const ArrowIcon = styled(Icon).attrs({ icon: 'arrowright' })<ArrowIconProps>`
   && {
     width: 12px;
     height: 12px;
@@ -60,10 +75,18 @@ const ArrowIcon = styled(Icon).attrs({ icon: 'arrowright' })`
   }
 `;
 
-function Menu({ isTopLevel, item, setMenuOpenStateById, ...rest }) {
+type SetMenuOpenStateById = (args: { id: string; isOpen: boolean }) => void;
+
+interface MenuProps {
+  isTopLevel?: boolean;
+  item: ItemWithStateAndId;
+  setMenuOpenStateById: SetMenuOpenStateById;
+  currentPath: string;
+}
+
+function Menu({ isTopLevel, item, setMenuOpenStateById, currentPath, ...rest }: MenuProps) {
   if (!item.children) return null;
   const arrow = <ArrowIcon isOpen={item.isOpen} isTopLevel={isTopLevel} aria-hidden />;
-  const MenuToggle = isTopLevel ? TopLevelMenuToggle : MenuLink;
   const toggleOpenState = () => setMenuOpenStateById({ id: item.id, isOpen: !item.isOpen });
 
   return (
@@ -84,6 +107,7 @@ function Menu({ isTopLevel, item, setMenuOpenStateById, ...rest }) {
           items={item.children}
           isTopLevel={false}
           setMenuOpenStateById={setMenuOpenStateById}
+          currentPath={currentPath}
           {...rest}
         />
       )}
@@ -91,22 +115,11 @@ function Menu({ isTopLevel, item, setMenuOpenStateById, ...rest }) {
   );
 }
 
-Menu.propTypes = {
-  isTopLevel: PropTypes.bool,
-  item: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    isOpen: PropTypes.bool.isRequired,
-    title: PropTypes.string.isRequired,
-    children: PropTypes.arrayOf(PropTypes.shape({})),
-  }).isRequired,
-  setMenuOpenStateById: PropTypes.func.isRequired,
-};
-
 Menu.defaultProps = {
   isTopLevel: false,
 };
 
-const List = styled.ul`
+const List = styled.ul<{ isTopLevel?: boolean }>`
   list-style-type: none;
   padding: 0;
   margin: 0;
@@ -121,34 +134,48 @@ const List = styled.ul`
 
   ${(props) =>
     props.isTopLevel &&
-    `  
-    > li {
-      padding-top: 24px;
+    css`
+      > li {
+        padding-top: 24px;
 
-      ul, ol {
-        padding-top: 12px;
-        display: flex;
-        flex-direction: column;
-      }
-      
-      > ul { 
-        padding-left: 35px;
+        ul,
+        ol {
+          padding-top: 12px;
+          display: flex;
+          flex-direction: column;
+        }
 
-        > li ul {
-          padding-left: 15px;
+        > ul {
+          padding-left: 35px;
+
+          > li ul {
+            padding-left: 15px;
+          }
+        }
+
+        > ol {
+          padding-left: 20px;
         }
       }
-
-      > ol {
-        padding-left: 20px;
-    
-      }
-    }
-  `}
+    `}
 `;
 
-export function TableOfContentsItems({ className, currentPath, isTopLevel, items, ...rest }) {
-  const isOrderedList = items.every((item) => item.type === ITEM_TYPES.BULLET_LINK);
+export interface TableOfContentsItemsProps {
+  className?: string;
+  currentPath: string;
+  isTopLevel: boolean;
+  items: ItemWithStateAndId[];
+  setMenuOpenStateById?: SetMenuOpenStateById;
+}
+
+export function TableOfContentsItems({
+  className,
+  currentPath,
+  isTopLevel = false,
+  items,
+  ...rest
+}: TableOfContentsItemsProps) {
+  const isOrderedList = items.every((item) => item.type === 'bullet-link');
 
   return (
     <List className={className} isTopLevel={isTopLevel} as={isOrderedList ? 'ol' : 'ul'}>
@@ -167,18 +194,6 @@ export function TableOfContentsItems({ className, currentPath, isTopLevel, items
     </List>
   );
 }
-
-TableOfContentsItems.propTypes = {
-  className: PropTypes.string,
-  currentPath: PropTypes.string.isRequired,
-  isTopLevel: PropTypes.bool.isRequired,
-
-  items: PropTypes.arrayOf(
-    PropTypes.shape({
-      type: PropTypes.oneOf(Object.values(ITEM_TYPES)).isRequired,
-    }).isRequired
-  ).isRequired,
-};
 
 TableOfContentsItems.defaultProps = {
   className: '',

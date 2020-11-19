@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { TableOfContents } from './TableOfContents';
+import { TableOfContents, TableOfContentsProps } from './TableOfContents';
+import { Item } from './TableOfContentsItems';
+// @ts-ignore
 import { StoryLinkWrapper } from '../StoryLinkWrapper';
 
 export default {
   title: 'Design System/TableOfContents',
   component: TableOfContents,
   decorators: [
-    (storyFn) => <div style={{ width: 240, outline: '1px dotted grey' }}>{storyFn()}</div>,
+    (storyFn: any) => <div style={{ width: 240, outline: '1px dotted grey' }}>{storyFn()}</div>,
   ],
 };
 
-const items = [
+const items: Item[] = [
   {
     title: 'Get Started',
     type: 'menu',
@@ -98,24 +100,26 @@ const items = [
   },
 ];
 
-const findPaths = (pathItems) => pathItems.flatMap((item) => item.path || findPaths(item.children));
+const findPaths = (pathItems: Item[]) =>
+  // @ts-ignore
+  pathItems.flatMap((item: Item) => item.path || findPaths(item.children));
 const paths = findPaths(items);
 
-export const Basic = (args) => <TableOfContents {...args} />;
+export const Basic = (args: TableOfContentsProps) => <TableOfContents {...args} />;
 Basic.args = { currentPath: paths[0], items };
 
-export const NestedActivePath = Basic.bind();
+export const NestedActivePath = Basic.bind({});
 NestedActivePath.args = { currentPath: '/features-and-behavior', items };
 
-const addLinkWrappers = (itemsToCompose) =>
-  itemsToCompose.map((item) => {
+const addLinkWrappers = (itemsToCompose: Item[]): Item[] =>
+  itemsToCompose.map((item: Item) => {
     if (item.type === 'link' || item.type === 'bullet-link')
       return { ...item, LinkWrapper: StoryLinkWrapper };
     if (item.children) return { ...item, children: addLinkWrappers(item.children) };
     return item;
   });
 const itemsWithLinkWrappers = addLinkWrappers(items);
-export const LinkWrappers = Basic.bind();
+export const LinkWrappers = Basic.bind({});
 LinkWrappers.args = { currentPath: paths[0], items: itemsWithLinkWrappers };
 
 export const WithOpenControls = () => (
