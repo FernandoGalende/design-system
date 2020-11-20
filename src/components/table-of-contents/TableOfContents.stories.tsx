@@ -105,10 +105,57 @@ const findPaths = (pathItems: Item[]) =>
   pathItems.flatMap((item: Item) => item.path || findPaths(item.children));
 const paths = findPaths(items);
 
-export const Basic = (args: TableOfContentsProps) => <TableOfContents {...args} />;
-Basic.args = { currentPath: paths[0], items };
+export const BasicFlat = (args: TableOfContentsProps) => <TableOfContents {...args} />;
+BasicFlat.args = {
+  currentPath: '/essentials',
+  items: [
+    {
+      title: '⭐️  Popular',
+      path: '/popular',
+      type: 'link',
+    },
+    {
+      title: '🧩  Essentials',
+      path: '/essentials',
+      type: 'link',
+    },
+    {
+      title: '🛠  Code',
+      path: '/code',
+      type: 'link',
+    },
+    {
+      title: '⚡️  Data & state',
+      path: '/Data & state',
+      type: 'link',
+    },
+    {
+      title: '💅  Style',
+      path: '/style',
+      type: 'link',
+    },
+    {
+      title: '🎨  Design',
+      path: '/design',
+      type: 'link',
+    },
+    {
+      title: '⚙️  Appearance',
+      path: '/appearance',
+      type: 'link',
+    },
+    {
+      title: '🗄  Organize',
+      path: '/organize',
+      type: 'link',
+    },
+  ],
+};
 
-export const NestedActivePath = Basic.bind({});
+export const BasicNested = (args: TableOfContentsProps) => <TableOfContents {...args} />;
+BasicNested.args = { currentPath: paths[0], items };
+
+export const NestedActivePath = BasicNested.bind({});
 NestedActivePath.args = { currentPath: '/features-and-behavior', items };
 
 const addLinkWrappers = (itemsToCompose: Item[]): Item[] =>
@@ -119,7 +166,7 @@ const addLinkWrappers = (itemsToCompose: Item[]): Item[] =>
     return item;
   });
 const itemsWithLinkWrappers = addLinkWrappers(items);
-export const LinkWrappers = Basic.bind({});
+export const LinkWrappers = BasicNested.bind({});
 LinkWrappers.args = { currentPath: paths[0], items: itemsWithLinkWrappers };
 
 export const WithOpenControls = () => (
